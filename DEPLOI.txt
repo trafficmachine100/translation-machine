@@ -1,0 +1,15 @@
+ON UTLISE CLAUD CODE PAR trafficmachine100@gmail.com  SUR
+PAGE LIEN ( https://claude.ai/chat/5b5b31f0-6953-4a2e-941c-d38dcab11662)
+
+ON LANCE SUR PC AVEC CONDA ET CMDER PUIS ON PASSE EN LIGNE GIHUB
+
+
+conda create -n translation-machine python=3.10
+conda activate translation-machine
+mkdir translation-machine
+cd translation-machine
+"F:\DIGITAL_CONTENT\translation-machine"
+
+git clone https://github.com/trafficmachine100/translation-machine.git .
+
+https://github.com/trafficmachine100/translation-machine
