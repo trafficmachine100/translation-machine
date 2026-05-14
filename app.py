@@ -58,7 +58,6 @@ st.markdown("""
 
 # ─── LOGO + Hero Section ──────────────────────────────────────────────────────
 logo_url = "https://raw.githubusercontent.com/trafficmachine100/translation-machine/master/LOGO1.png"
-
 col_logo, col_hero = st.columns([1, 3])
 
 with col_logo:
