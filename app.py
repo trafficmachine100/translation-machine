@@ -5,124 +5,225 @@ import datetime
 
 # ─── Configuration de la page ───────────────────────────────────────────────
 st.set_page_config(
-    page_title="Translation Machine",
+    page_title="No_Limit Translation Machine",
     page_icon="🌐",
     layout="wide"
 )
 
-# ─── Titre principal ─────────────────────────────────────────────────────────
-st.title("🌐 Translation Machine")
-st.caption("Traduction sans limite · Anglais · Français · Arabe")
+# ─── CSS personnalisé ─────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+.hero-box {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 1px solid #f0a500;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    text-align: center;
+}
+.hero-title {
+    font-size: 2em;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.hero-title span {
+    color: #f0a500;
+}
+.hero-tagline {
+    font-size: 1.15em;
+    color: #f0a500;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+.hero-desc {
+    font-size: 0.97em;
+    color: #cccccc;
+    margin-bottom: 10px;
+    line-height: 1.7;
+}
+.hero-langs {
+    font-size: 1em;
+    color: #f0a500;
+    font-weight: 600;
+    letter-spacing: 2px;
+}
+.stButton > button {
+    border-radius: 8px;
+    font-weight: 600;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ─── LOGO + Hero Section ──────────────────────────────────────────────────────
+logo_url = "https://raw.githubusercontent.com/trafficmachine100/translation-machine/master/LOGO1.png"
+
+col_logo, col_hero = st.columns([1, 3])
+
+with col_logo:
+    st.image(logo_url, width=180)
+
+with col_hero:
+    st.markdown("""
+    <div class="hero-box">
+        <div class="hero-title">No_Limit_Translation,<span>MACHINE</span></div>
+        <div class="hero-tagline">— Translate unlimited text for free! —</div>
+        <div class="hero-desc">
+            No 5,000-character restriction like Google Translate.<br>
+            Paste any size text. Get instant translation.
+        </div>
+        <div class="hero-langs">English &nbsp;·&nbsp; French &nbsp;·&nbsp; Arabic &nbsp;·&nbsp; Always Free</div>
+    </div>
+    """, unsafe_allow_html=True)
+
 st.divider()
 
-# ─── Initialisation de l'historique ──────────────────────────────────────────
+# ─── Initialisation session ───────────────────────────────────────────────────
 if "history" not in st.session_state:
     st.session_state.history = []
+if "input_text" not in st.session_state:
+    st.session_state.input_text = ""
+if "output_text" not in st.session_state:
+    st.session_state.output_text = ""
 
-# ─── Layout : deux colonnes principales ──────────────────────────────────────
+# ─── Layout principal ─────────────────────────────────────────────────────────
 col1, col2 = st.columns(2)
 
 with col1:
-    st.subheader("📝 Texte source")
+    st.subheader("📝 Source Text")
 
-    # Sélection langue source
     lang_names = list(LANGUAGES.keys())
-    source_lang = st.selectbox("Langue source", lang_names, index=0, key="source")
+    source_lang = st.selectbox("Source language", lang_names, index=0, key="source")
 
-    # Zone de texte source
+    # Boutons Clear + Paste SOURCE
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button("🗑️ Clear", key="clear_src", use_container_width=True):
+            st.session_state.input_text = ""
+            st.rerun()
+    with b2:
+        if st.button("📋 Paste", key="paste_src", use_container_width=True):
+            try:
+                import subprocess
+                result = subprocess.run(
+                    ["powershell", "-command", "Get-Clipboard"],
+                    capture_output=True, text=True
+                )
+                st.session_state.input_text = result.stdout.strip()
+                st.rerun()
+            except:
+                st.warning("⚠️ Paste not available on cloud — use Ctrl+V directly.")
+
     input_text = st.text_area(
-        label="Entrez votre texte ici",
-        height=300,
-        placeholder="Collez ou tapez votre texte ici... (sans limite de caractères)",
-        key="input_text"
+        label="Enter your text here",
+        value=st.session_state.input_text,
+        height=320,
+        placeholder="Paste or type your text here... (no character limit)",
+        key="input_area"
     )
+    st.session_state.input_text = input_text
 
-    # Compteur de caractères
     char_count = len(input_text)
-    st.caption(f"📊 {char_count:,} caractères")
+    st.caption(f"📊 {char_count:,} characters")
 
-    # Détection automatique
     if input_text.strip():
         detected = detect_language(input_text)
-        st.info(f"🔍 Langue détectée : **{detected}**")
+        st.info(f"🔍 Detected language : **{detected}**")
 
-    # Import fichier .txt
     st.divider()
-    st.subheader("📂 Ou importer un fichier .txt")
-    uploaded_file = st.file_uploader("Choisir un fichier .txt", type=["txt"])
+    st.subheader("📂 Or import a .txt file")
+    uploaded_file = st.file_uploader("Choose a .txt file", type=["txt"])
     if uploaded_file:
         file_content = uploaded_file.read().decode("utf-8")
+        st.session_state.input_text = file_content
         input_text = file_content
-        st.success(f"✅ Fichier chargé : {len(file_content):,} caractères")
-        st.text_area("Aperçu du fichier", file_content[:500] + "...", height=150)
+        st.success(f"✅ File loaded : {len(file_content):,} characters")
+        st.text_area("File preview", file_content[:500] + "...", height=120)
 
 with col2:
-    st.subheader("🎯 Traduction")
+    st.subheader("🎯 Translation")
 
-    # Sélection langue cible
-    target_lang = st.selectbox("Langue cible", lang_names, index=1, key="target")
+    target_lang = st.selectbox("Target language", lang_names, index=1, key="target")
 
-    # Bouton traduire
-    translate_btn = st.button("🚀 Traduire", type="primary", use_container_width=True)
-
-    # Zone résultat
-    result_area = st.empty()
+    translate_btn = st.button("🚀 Translate", type="primary", use_container_width=True)
 
     if translate_btn:
         if not input_text.strip():
-            st.warning("⚠️ Veuillez entrer un texte ou importer un fichier.")
+            st.warning("⚠️ Please enter text or import a file.")
         elif source_lang == target_lang:
-            st.warning("⚠️ La langue source et cible sont identiques.")
+            st.warning("⚠️ Source and target languages are the same.")
         else:
-            with st.spinner("⏳ Traduction en cours..."):
+            with st.spinner("⏳ Translating..."):
                 result = translate_text(input_text, source_lang, target_lang)
+            st.session_state.output_text = result
 
-            # Affiche le résultat
-            st.text_area(
-                label="Résultat",
-                value=result,
-                height=300,
-                key="output"
-            )
+    # Zone résultat
+    output_text = st.session_state.output_text
 
-            st.caption(f"📊 {len(result):,} caractères traduits")
+    # Boutons Clear + Paste TRADUCTION
+    b3, b4 = st.columns(2)
+    with b3:
+        if st.button("🗑️ Clear", key="clear_tgt", use_container_width=True):
+            st.session_state.output_text = ""
+            st.rerun()
+    with b4:
+        if st.button("📋 Paste", key="paste_tgt", use_container_width=True):
+            try:
+                import subprocess
+                result_clip = subprocess.run(
+                    ["powershell", "-command", "Get-Clipboard"],
+                    capture_output=True, text=True
+                )
+                st.session_state.output_text = result_clip.stdout.strip()
+                st.rerun()
+            except:
+                st.warning("⚠️ Paste not available on cloud — use Ctrl+V directly.")
 
-            # Export résultat en .txt
-            st.download_button(
-                label="💾 Télécharger la traduction (.txt)",
-                data=result.encode("utf-8"),
-                file_name=f"traduction_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                mime="text/plain",
-                use_container_width=True
-            )
+    st.text_area(
+        label="Translation result",
+        value=output_text,
+        height=320,
+        key="output_area"
+    )
 
-            # Sauvegarde dans l'historique
+    if output_text:
+        st.caption(f"📊 {len(output_text):,} characters translated")
+
+        st.download_button(
+            label="💾 Download translation (.txt)",
+            data=output_text.encode("utf-8"),
+            file_name=f"translation_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+
+        if translate_btn and input_text.strip():
             st.session_state.history.append({
                 "date": datetime.datetime.now().strftime("%H:%M:%S"),
                 "source": source_lang,
                 "target": target_lang,
                 "input": input_text[:80] + "..." if len(input_text) > 80 else input_text,
-                "output": result[:80] + "..." if len(result) > 80 else result
+                "output": output_text[:80] + "..." if len(output_text) > 80 else output_text
             })
 
-# ─── Historique ──────────────────────────────────────────────────────────────
+# ─── Historique ───────────────────────────────────────────────────────────────
 st.divider()
-st.subheader("🕒 Historique des traductions")
+st.subheader("🕒 Translation History")
 
 if st.session_state.history:
-    # Bouton effacer historique
-    if st.button("🗑️ Effacer l'historique"):
+    if st.button("🗑️ Clear History"):
         st.session_state.history = []
         st.rerun()
 
-    for i, item in enumerate(reversed(st.session_state.history)):
+    for item in reversed(st.session_state.history):
         with st.expander(f"[{item['date']}] {item['source']} → {item['target']}"):
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown("**Source :**")
                 st.write(item["input"])
             with c2:
-                st.markdown("**Traduction :**")
+                st.markdown("**Translation :**")
                 st.write(item["output"])
 else:
-    st.caption("Aucune traduction effectuée dans cette session.")
+    st.caption("No translations yet in this session.")
